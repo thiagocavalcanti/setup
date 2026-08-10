@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-setup_tools.py: Cross-platform installer for development tools (NVM, SDKMAN, Go) 
+setup_tools.py: Cross-platform installer for development tools (NVM, SDKMAN, Go, Docker, DBeaver) 
 and macOS apps (Maccy, Rectangle) with startup configuration.
 """
 
@@ -112,6 +112,51 @@ def install_golang():
     elif sys.platform == "win32":
         run_cmd(["winget", "install", "GoLang.Go", "--silent"])
 
+def install_docker():
+    print_info("Checking Docker...")
+    has_docker = shutil.which("docker") is not None or os.path.exists("/Applications/Docker.app")
+    
+    if has_docker:
+        print_success("Docker is already installed.")
+        return
+
+    if sys.platform == "darwin":
+        brew_bin = shutil.which("brew") or "/opt/homebrew/bin/brew"
+        if os.path.exists(brew_bin):
+            print_info("Installing Docker via Homebrew Cask...")
+            ok, out, err = run_cmd([brew_bin, "install", "--cask", "docker"])
+            if ok:
+                print_success("Docker installed successfully.")
+            else:
+                print_error(f"Failed to install Docker: {err}")
+    elif sys.platform == "linux":
+        print_info("Installing Docker via official script...")
+        run_cmd("curl -fsSL https://get.docker.com | sh", shell=True)
+    elif sys.platform == "win32":
+        run_cmd(["winget", "install", "Docker.DockerDesktop", "--silent"])
+
+def install_dbeaver():
+    print_info("Checking DBeaver...")
+    has_dbeaver = shutil.which("dbeaver") is not None or os.path.exists("/Applications/DBeaver.app")
+    
+    if has_dbeaver:
+        print_success("DBeaver is already installed.")
+        return
+
+    if sys.platform == "darwin":
+        brew_bin = shutil.which("brew") or "/opt/homebrew/bin/brew"
+        if os.path.exists(brew_bin):
+            print_info("Installing DBeaver via Homebrew Cask...")
+            ok, out, err = run_cmd([brew_bin, "install", "--cask", "dbeaver-community"])
+            if ok:
+                print_success("DBeaver installed successfully.")
+            else:
+                print_error(f"Failed to install DBeaver: {err}")
+    elif sys.platform == "linux":
+        run_cmd("sudo snap install dbeaver-ce", shell=True)
+    elif sys.platform == "win32":
+        run_cmd(["winget", "install", "dbeaver.dbeaver", "--silent"])
+
 def setup_mac_apps():
     if sys.platform != "darwin":
         return
@@ -166,6 +211,8 @@ def main():
     install_nvm()
     install_sdkman()
     install_golang()
+    install_docker()
+    install_dbeaver()
     setup_mac_apps()
 
 if __name__ == "__main__":
