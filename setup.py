@@ -2,6 +2,7 @@ import os
 import shutil
 import sys
 import stat
+import subprocess
 from pathlib import Path
 
 # Terminal Colors & Formatting
@@ -41,7 +42,7 @@ def setup_ai_memory_and_tools():
     repo_dir = Path(__file__).parent.resolve()
     home_dir = Path.home()
 
-    total_steps = 2
+    total_steps = 3
 
     # Step 1: AI Memory Files Setup
     print_step(1, total_steps, "Setting up AI Global Memory...")
@@ -111,6 +112,15 @@ def setup_ai_memory_and_tools():
 
         if not installed_bin:
             print_warn("Could not create symlink in standard bin directories. Available at ~/scripts/git_ai_commit.py.")
+
+    # Step 3: Development Tools & Mac Apps
+    print()
+    print_step(3, total_steps, "Setting up Development Tools & macOS Apps...")
+    setup_tools_script = repo_dir / "scripts" / "setup_tools.py"
+    if setup_tools_script.exists():
+        subprocess.run([sys.executable, str(setup_tools_script)])
+    else:
+        print_warn(f"setup_tools.py not found at {setup_tools_script}")
 
     print(f"\n{Colors.BOLD}{Colors.GREEN}✔ Personal System Setup completed successfully!{Colors.RESET}\n")
 

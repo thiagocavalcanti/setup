@@ -1,0 +1,172 @@
+#!/usr/bin/env python3
+"""
+setup_tools.py: Cross-platform installer for development tools (NVM, SDKMAN, Go) 
+and macOS apps (Maccy, Rectangle) with startup configuration.
+"""
+
+import sys
+import os
+import shutil
+import subprocess
+from pathlib import Path
+
+# Terminal Colors
+class Colors:
+    RESET = "\033[0m"
+    BOLD = "\033[1m"
+    DIM = "\033[2m"
+    BLUE = "\033[34m"
+    CYAN = "\033[36m"
+    GREEN = "\033[32m"
+    YELLOW = "\033[33m"
+    RED = "\033[31m"
+
+def print_info(msg):
+    print(f"  {Colors.BLUE}➔{Colors.RESET} {msg}")
+
+def print_success(msg):
+    print(f"  {Colors.GREEN}✔{Colors.RESET} {Colors.DIM}{msg}{Colors.RESET}")
+
+def print_warn(msg):
+    print(f"  {Colors.YELLOW}⚠{Colors.RESET} {msg}")
+
+def print_error(msg):
+    print(f"  {Colors.RED}✖{Colors.RESET} {msg}")
+
+def run_cmd(cmd, shell=False, check=False):
+    try:
+        res = subprocess.run(cmd, shell=shell, capture_output=True, text=True, check=check)
+        return res.returncode == 0, res.stdout.strip(), res.stderr.strip()
+    except Exception as e:
+        return False, "", str(e)
+
+def install_nvm():
+    home = Path.home()
+    nvm_dir = home / ".nvm"
+    print_info("Checking Node Version Manager (NVM)...")
+
+    if nvm_dir.exists():
+        print_success("NVM is already installed at ~/.nvm")
+        return
+
+    if sys.platform in ["darwin", "linux"]:
+        print_info("Installing NVM via official script...")
+        cmd = "curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash"
+        ok, out, err = run_cmd(cmd, shell=True)
+        if ok or nvm_dir.exists():
+            print_success("NVM installed successfully at ~/.nvm")
+        else:
+            print_error(f"Failed to install NVM: {err}")
+    elif sys.platform == "win32":
+        print_info("Installing NVM for Windows via winget...")
+        ok, out, err = run_cmd(["winget", "install", "CoreyButler.NVMforWindows", "--silent"])
+        if ok:
+            print_success("NVM for Windows installed successfully.")
+        else:
+            print_warn("Could not auto-install NVM for Windows. Please install manually.")
+
+def install_sdkman():
+    home = Path.home()
+    sdkman_dir = home / ".sdkman"
+    print_info("Checking Java Version Manager (SDKMAN!)...")
+
+    if sdkman_dir.exists():
+        print_success("SDKMAN! is already installed at ~/.sdkman")
+        return
+
+    if sys.platform in ["darwin", "linux"]:
+        print_info("Installing SDKMAN! via official script...")
+        cmd = 'curl -s "https://get.sdkman.io" | bash'
+        ok, out, err = run_cmd(cmd, shell=True)
+        if ok or sdkman_dir.exists():
+            print_success("SDKMAN! installed successfully at ~/.sdkman")
+        else:
+            print_error(f"Failed to install SDKMAN!: {err}")
+    elif sys.platform == "win32":
+        print_warn("SDKMAN! requires WSL or Git Bash on Windows.")
+
+def install_golang():
+    print_info("Checking Golang (Go)...")
+    has_go = shutil.which("go") is not None
+
+    if has_go:
+        ok, out, _ = run_cmd(["go", "version"])
+        if ok:
+            print_success(f"Golang is already installed ({out})")
+            return
+
+    if sys.platform == "darwin":
+        brew_bin = shutil.which("brew") or "/opt/homebrew/bin/brew"
+        if os.path.exists(brew_bin):
+            print_info("Installing Golang via Homebrew...")
+            ok, out, err = run_cmd([brew_bin, "install", "go"])
+            if ok:
+                print_success("Golang installed successfully via Homebrew.")
+            else:
+                print_error(f"Failed to install Go via Homebrew: {err}")
+        else:
+            print_error("Homebrew is required to install Go on macOS.")
+    elif sys.platform == "linux":
+        print_info("Installing Golang via package manager...")
+        run_cmd("sudo apt-get update && sudo apt-get install -y golang", shell=True)
+    elif sys.platform == "win32":
+        run_cmd(["winget", "install", "GoLang.Go", "--silent"])
+
+def setup_mac_apps():
+    if sys.platform != "darwin":
+        return
+
+    print_info("Checking macOS Productivity Apps (Maccy & Rectangle)...")
+    brew_bin = shutil.which("brew") or "/opt/homebrew/bin/brew"
+    if not os.path.exists(brew_bin):
+        print_warn("Homebrew not found. Cannot install Maccy/Rectangle casks.")
+        return
+
+    # 1. Install Casks
+    casks = ["maccy", "rectangle"]
+    for cask in casks:
+        app_name = cask.capitalize()
+        app_path = Path(f"/Applications/{app_name}.app")
+        if not app_path.exists():
+            print_info(f"Installing {app_name} via Homebrew Cask...")
+            ok, out, err = run_cmd([brew_bin, "install", "--cask", cask])
+            if ok:
+                print_success(f"{app_name} installed successfully.")
+            else:
+                print_warn(f"Cask install for {app_name} returned: {err or out}")
+        else:
+            print_success(f"{app_name}.app is already installed in /Applications.")
+
+    # 2. Ensure apps are running
+    for app in ["Maccy", "Rectangle"]:
+        run_cmd(["open", "-a", app])
+
+    # 3. Add to macOS Login Items (Startup)
+    print_info("Configuring startup login items for Maccy & Rectangle...")
+    ok, out, _ = run_cmd(["osascript", "-e", 'tell application "System Events" to get name of every login item'])
+    existing_items = [item.strip() for item in out.split(",")] if ok else []
+
+    for app in ["Maccy", "Rectangle"]:
+        if app in existing_items:
+            print_success(f"{app} is already configured in macOS startup login items.")
+        else:
+            app_path = f"/Applications/{app}.app"
+            if os.path.exists(app_path):
+                apple_script = (
+                    f'tell application "System Events" to make new login item '
+                    f'at end with properties {{path:"{app_path}", hidden:false}}'
+                )
+                ok_item, _, err_item = run_cmd(["osascript", "-e", apple_script])
+                if ok_item:
+                    print_success(f"Added {app} to macOS startup login items.")
+                else:
+                    print_warn(f"Could not add {app} to login items: {err_item}")
+
+def main():
+    install_nvm()
+    install_sdkman()
+    install_golang()
+    setup_mac_apps()
+
+if __name__ == "__main__":
+    main()
