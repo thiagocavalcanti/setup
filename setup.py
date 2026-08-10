@@ -81,37 +81,46 @@ def setup_ai_memory_and_tools():
     # Step 2: Scripts and CLI Tools Setup
     print()
     print_step(2, total_steps, "Setting up CLI Tools & Scripts...")
-    scripts_src = repo_dir / "scripts" / "git_ai_commit.py"
-    if scripts_src.exists():
-        user_scripts_dir = home_dir / "scripts"
-        user_scripts_dir.mkdir(parents=True, exist_ok=True)
-        dest_script = user_scripts_dir / "git_ai_commit.py"
-        
-        print_info(f"Copying git_ai_commit.py -> {dest_script}")
+    scripts_to_install = [
+        ("git_ai_commit.py", ["git-ai-commit"]),
+        ("init_repo.py", ["init-repo", "git-init-repo"])
+    ]
+
+    user_scripts_dir = home_dir / "scripts"
+    user_scripts_dir.mkdir(parents=True, exist_ok=True)
+
+    candidate_bin_dirs = [
+        home_dir / ".local" / "bin",
+        home_dir / "bin"
+    ]
+
+    for script_name, command_names in scripts_to_install:
+        scripts_src = repo_dir / "scripts" / script_name
+        if not scripts_src.exists():
+            continue
+
+        dest_script = user_scripts_dir / script_name
+        print_info(f"Copying {script_name} -> {dest_script}")
         shutil.copy2(scripts_src, dest_script)
         dest_script.chmod(dest_script.stat().st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
 
-        candidate_bin_dirs = [
-            home_dir / ".local" / "bin",
-            home_dir / "bin"
-        ]
+        for cmd_name in command_names:
+            installed_bin = False
+            for bin_dir in candidate_bin_dirs:
+                try:
+                    bin_dir.mkdir(parents=True, exist_ok=True)
+                    bin_symlink = bin_dir / cmd_name
+                    if bin_symlink.exists() or bin_symlink.is_symlink():
+                        bin_symlink.unlink(missing_ok=True)
+                    bin_symlink.symlink_to(dest_script)
+                    print_success(f"Installed CLI command: {bin_symlink} -> {dest_script}")
+                    installed_bin = True
+                    break
+                except Exception as e:
+                    pass
 
-        installed_bin = False
-        for bin_dir in candidate_bin_dirs:
-            try:
-                bin_dir.mkdir(parents=True, exist_ok=True)
-                bin_symlink = bin_dir / "git-ai-commit"
-                if bin_symlink.exists() or bin_symlink.is_symlink():
-                    bin_symlink.unlink(missing_ok=True)
-                bin_symlink.symlink_to(dest_script)
-                print_success(f"Installed CLI command: {bin_symlink} -> {dest_script}")
-                installed_bin = True
-                break
-            except Exception as e:
-                print_warn(f"Could not use {bin_dir} ({e}). Trying fallback...")
-
-        if not installed_bin:
-            print_warn("Could not create symlink in standard bin directories. Available at ~/scripts/git_ai_commit.py.")
+            if not installed_bin:
+                print_warn(f"Could not create symlink for {cmd_name} in bin directories.")
 
     # Step 3: Development Tools & Mac Apps
     print()

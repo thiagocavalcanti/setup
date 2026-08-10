@@ -8,6 +8,7 @@ This repository stores cross-platform computer setup scripts, CLI utilities, and
 - `ai_memory/`: Source templates for global AI memory files (`CLAUDE.md`, `OPINIONS.md`, `VOICE.md`). Deployed to `~/.config/ai-memory/` and symlinked to `~/.claude/CLAUDE.md`, `~/AGENTS.md`, `~/OPINIONS.md`, `~/VOICE.md`.
 - `scripts/setup_tools.py`: Modular installer for development runtimes (NVM, SDKMAN, Golang, Docker, DBeaver) and macOS apps (Maccy, Rectangle + startup login items).
 - `scripts/git_ai_commit.py`: Token-optimized Git diff generator for AI commit message drafting. Installed to `~/bin/git-ai-commit`.
+- `scripts/init_repo.py`: Repository initializer script. Creates an empty `AGENTS.md`, a `CLAUDE.md` symlink pointing to `AGENTS.md`, and installs the `skill-creator` skill. Installed to `~/bin/init-repo` and `~/bin/git-init-repo`.
 
 ## Guidelines for Future Agents
 
@@ -21,3 +22,6 @@ This repository stores cross-platform computer setup scripts, CLI utilities, and
 
 3. **Commit Workflow**:
    - Before drafting git commit messages, ALWAYS run `python3 ~/scripts/git_ai_commit.py` (or `git ai-commit`) to generate a token-optimized diff summary.
+
+4. **New Repository Configuration**:
+   - Run `init-repo` (or `git init-repo`) inside any new target directory to automatically set up `AGENTS.md`, `CLAUDE.md` symlink, and the `skill-creator` skill.
