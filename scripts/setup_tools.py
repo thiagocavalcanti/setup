@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-setup_tools.py: Cross-platform installer for development tools (NVM, SDKMAN, Go, Docker, DBeaver) 
+setup_tools.py: Cross-platform installer for development tools (NVM, SDKMAN, Go, Docker, DBeaver, WezTerm) 
 and macOS apps (Maccy, Rectangle) with startup configuration.
 """
 
@@ -157,6 +157,31 @@ def install_dbeaver():
     elif sys.platform == "win32":
         run_cmd(["winget", "install", "dbeaver.dbeaver", "--silent"])
 
+def install_wezterm():
+    print_info("Checking WezTerm...")
+    has_wezterm = shutil.which("wezterm") is not None or os.path.exists("/Applications/WezTerm.app")
+    
+    if has_wezterm:
+        print_success("WezTerm is already installed.")
+        return
+
+    if sys.platform == "darwin":
+        brew_bin = shutil.which("brew") or "/opt/homebrew/bin/brew"
+        if os.path.exists(brew_bin):
+            print_info("Installing WezTerm via Homebrew Cask...")
+            ok, out, err = run_cmd([brew_bin, "install", "--cask", "wezterm"])
+            if ok or os.path.exists("/Applications/WezTerm.app"):
+                print_success("WezTerm installed successfully.")
+            else:
+                print_error(f"Failed to install WezTerm: {err or out}")
+        else:
+            print_error("Homebrew is required to install WezTerm on macOS.")
+    elif sys.platform == "linux":
+        print_info("Installing WezTerm via package manager...")
+        run_cmd("curl -fsSL https://apt.fury.io/wez/gpg.key | sudo gpg --yes --dearmor -o /etc/apt/trusted.gpg.d/wezterm-fury.gpg && echo 'deb https://apt.fury.io/wez/ * *' | sudo tee /etc/apt/sources.list.d/wezterm.list && sudo apt-get update && sudo apt-get install -y wezterm", shell=True)
+    elif sys.platform == "win32":
+        run_cmd(["winget", "install", "wez.wezterm", "--silent"])
+
 def setup_mac_apps():
     if sys.platform != "darwin":
         return
@@ -213,6 +238,7 @@ def main():
     install_golang()
     install_docker()
     install_dbeaver()
+    install_wezterm()
     setup_mac_apps()
 
 if __name__ == "__main__":
