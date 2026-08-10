@@ -42,7 +42,7 @@ def setup_ai_memory_and_tools():
     repo_dir = Path(__file__).parent.resolve()
     home_dir = Path.home()
 
-    total_steps = 3
+    total_steps = 4
 
     # Step 1: AI Memory Files Setup
     print_step(1, total_steps, "Setting up AI Global Memory...")
@@ -122,9 +122,28 @@ def setup_ai_memory_and_tools():
             if not installed_bin:
                 print_warn(f"Could not create symlink for {cmd_name} in bin directories.")
 
-    # Step 3: Development Tools & Mac Apps
+    # Step 3: Application Configurations (WezTerm)
     print()
-    print_step(3, total_steps, "Setting up Development Tools & macOS Apps...")
+    print_step(3, total_steps, "Setting up Application Configurations (WezTerm)...")
+    wezterm_src = repo_dir / "config" / "wezterm" / "wezterm.lua"
+    if wezterm_src.exists():
+        wezterm_dest_dir = home_dir / ".config" / "wezterm"
+        wezterm_dest_dir.mkdir(parents=True, exist_ok=True)
+        wezterm_dest_file = wezterm_dest_dir / "wezterm.lua"
+        
+        print_info(f"Copying wezterm.lua -> {wezterm_dest_file}")
+        shutil.copy2(wezterm_src, wezterm_dest_file)
+
+        # Create home symlink ~/.wezterm.lua -> ~/.config/wezterm/wezterm.lua
+        wezterm_symlink = home_dir / ".wezterm.lua"
+        if wezterm_symlink.exists() or wezterm_symlink.is_symlink():
+            wezterm_symlink.unlink(missing_ok=True)
+        wezterm_symlink.symlink_to(wezterm_dest_file)
+        print_success(f"Symlinked {wezterm_symlink} -> {wezterm_dest_file}")
+
+    # Step 4: Development Tools & Mac Apps
+    print()
+    print_step(4, total_steps, "Setting up Development Tools & macOS Apps...")
     setup_tools_script = repo_dir / "scripts" / "setup_tools.py"
     if setup_tools_script.exists():
         subprocess.run([sys.executable, str(setup_tools_script)])
