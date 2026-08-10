@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 """
-setup_tools.py: Cross-platform installer for development tools (NVM, SDKMAN, Go, Docker, DBeaver, WezTerm, Tmux, Fonts) 
+setup_tools.py: Cross-platform installer for development tools (NVM, SDKMAN, Go, Docker, DBeaver, WezTerm, Tmux, no-mistakes, Fonts) 
 and macOS apps (Maccy, Rectangle, OpenSuperWhisper) with startup & language configuration.
 """
 
 import sys
 import os
 import shutil
+import stat
 import subprocess
 from pathlib import Path
 
@@ -209,6 +210,44 @@ def install_tmux():
     elif sys.platform == "win32":
         run_cmd(["winget", "install", "tmux.tmux", "--silent"])
 
+def install_no_mistakes():
+    print_info("Checking no-mistakes...")
+    home = Path.home()
+    target_bin = home / "bin" / "no-mistakes"
+    bin_in_path = shutil.which("no-mistakes")
+
+    if bin_in_path or target_bin.exists():
+        bin_file = str(bin_in_path or target_bin)
+        ok, out, _ = run_cmd([bin_file, "--version"])
+        if ok:
+            print_success(f"no-mistakes is already installed ({out})")
+            return
+
+    no_mistakes_bin = home / ".no-mistakes" / "bin" / "no-mistakes"
+    if not no_mistakes_bin.exists():
+        print_info("Installing no-mistakes via official script...")
+        run_cmd("curl -fsSL https://raw.githubusercontent.com/kunchenguid/no-mistakes/main/docs/install.sh | sh", shell=True)
+
+    if not no_mistakes_bin.exists() and shutil.which("go"):
+        print_info("Building no-mistakes via `go install`...")
+        run_cmd("go install github.com/kunchenguid/no-mistakes/cmd/no-mistakes@latest", shell=True)
+
+    src_bin = None
+    if no_mistakes_bin.exists():
+        src_bin = no_mistakes_bin
+    elif (home / "go" / "bin" / "no-mistakes").exists():
+        src_bin = home / "go" / "bin" / "no-mistakes"
+
+    if src_bin:
+        target_bin.parent.mkdir(parents=True, exist_ok=True)
+        if target_bin.exists() or target_bin.is_symlink():
+            target_bin.unlink(missing_ok=True)
+        shutil.copy2(src_bin, target_bin)
+        target_bin.chmod(target_bin.stat().st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
+        print_success(f"Installed no-mistakes binary to {target_bin}")
+    else:
+        print_warn("no-mistakes installation could not be verified automatically.")
+
 def install_fonts():
     print_info("Checking Hack Nerd Font...")
     if sys.platform == "darwin":
@@ -326,6 +365,7 @@ def main():
     install_dbeaver()
     install_wezterm()
     install_tmux()
+    install_no_mistakes()
     install_fonts()
     install_opensuperwhisper()
     setup_mac_apps()

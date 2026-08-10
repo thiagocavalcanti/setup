@@ -90,8 +90,8 @@ def setup_ai_memory_and_tools():
     user_scripts_dir.mkdir(parents=True, exist_ok=True)
 
     candidate_bin_dirs = [
-        home_dir / ".local" / "bin",
-        home_dir / "bin"
+        home_dir / "bin",
+        home_dir / ".local" / "bin"
     ]
 
     for script_name, command_names in scripts_to_install:
@@ -121,6 +121,42 @@ def setup_ai_memory_and_tools():
 
             if not installed_bin:
                 print_warn(f"Could not create symlink for {cmd_name} in bin directories.")
+
+    # Configure PATH and init-repo alias in shell config files (~/.zshrc, ~/.zprofile, ~/.bashrc, ~/.bash_profile)
+    shell_configs = [
+        home_dir / ".zshrc",
+        home_dir / ".zprofile",
+        home_dir / ".bashrc",
+        home_dir / ".bash_profile"
+    ]
+    path_export = 'export PATH="$HOME/bin:$HOME/scripts:$PATH"'
+    alias_init_repo = 'alias init-repo="python3 $HOME/scripts/init_repo.py"'
+    alias_git_init_repo = 'alias git-init-repo="python3 $HOME/scripts/init_repo.py"'
+    alias_git_ai_commit = 'alias git-ai-commit="python3 $HOME/scripts/git_ai_commit.py"'
+
+    for rc_file in shell_configs:
+        try:
+            if rc_file.exists():
+                content = rc_file.read_text(encoding="utf-8")
+                to_append = []
+                if "$HOME/bin" not in content and "~/bin" not in content:
+                    to_append.append(path_export)
+                if "alias init-repo=" not in content:
+                    to_append.append(alias_init_repo)
+                if "alias git-init-repo=" not in content:
+                    to_append.append(alias_git_init_repo)
+                if "alias git-ai-commit=" not in content:
+                    to_append.append(alias_git_ai_commit)
+
+                if to_append:
+                    with open(rc_file, "a", encoding="utf-8") as f:
+                        f.write("\n# Added by Personal Setup\n" + "\n".join(to_append) + "\n")
+                    print_success(f"Configured PATH and init-repo alias in {rc_file}")
+            elif rc_file.name == ".zprofile":
+                rc_file.write_text(f"# Added by Personal Setup\n{path_export}\n{alias_init_repo}\n{alias_git_init_repo}\n{alias_git_ai_commit}\n", encoding="utf-8")
+                print_success(f"Created and configured {rc_file}")
+        except Exception as e:
+            print_warn(f"Could not update {rc_file}: {e}")
 
     # Step 3: Application Configurations (WezTerm)
     print()
