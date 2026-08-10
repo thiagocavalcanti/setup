@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 """
-init_repo.py: Configures a repository with an empty AGENTS.md, a CLAUDE.md symlink, 
-and installs the 'skill-creator' skill.
+init_repo.py: Configures a repository by ensuring AGENTS.md and CLAUDE.md are linked,
+and installs the 'skill-creator' skill using `npx skills`.
 """
 
 import sys
 import os
+import shutil
+import subprocess
 import argparse
 from pathlib import Path
 
@@ -32,48 +34,6 @@ def print_warn(msg):
 def print_error(msg):
     print(f"  {Colors.RED}✖{Colors.RESET} {msg}")
 
-SKILL_CREATOR_CONTENT = """---
-name: skill-creator
-description: Create, structure, and refine new agent skills for this repository. Use when designing a new skill, adding runbooks, or documenting domain-specific agent workflows.
----
-
-# Skill Creator Guide
-
-This skill provides step-by-step guidance for creating high-quality, reusable skills for AI agents.
-
-## What is a Skill?
-
-A Skill is a directory containing a `SKILL.md` file (and optional helper scripts or resources) that teaches AI agents how to perform specialized multi-step tasks, execute runbooks, or use specific tools.
-
-## Skill Folder Structure
-
-```
-.agents/skills/<skill-name>/
-├── SKILL.md (Required: main instructions with YAML frontmatter)
-├── scripts/ (Optional: helper scripts)
-└── references/ (Optional: additional documentation or templates)
-```
-
-## SKILL.md Specification
-
-Every `SKILL.md` must begin with YAML frontmatter:
-
-```yaml
----
-name: <skill-name-kebab-case>
-description: <Clear 1-2 sentence description of when and why the agent should activate this skill>
----
-```
-
-## Workflow to Create a New Skill
-
-1. Identify the task or runbook to automate.
-2. Create the directory `.agents/skills/<skill-name>/`.
-3. Create `SKILL.md` with descriptive YAML frontmatter.
-4. Document clear, step-by-step instructions, pre-requisites, command invocations, and verification steps.
-5. If helper scripts are needed, place them in `.agents/skills/<skill-name>/scripts/`.
-"""
-
 def init_repository(target_path):
     repo_dir = Path(target_path).resolve()
     print(f"\n{Colors.BOLD}{Colors.CYAN}Initializing repository at:{Colors.RESET} {repo_dir}\n")
@@ -82,38 +42,54 @@ def init_repository(target_path):
         repo_dir.mkdir(parents=True, exist_ok=True)
         print_info(f"Created repository directory: {repo_dir}")
 
-    # 1. Create empty AGENTS.md
     agents_md = repo_dir / "AGENTS.md"
-    if not agents_md.exists():
-        agents_md.write_text("", encoding="utf-8")
-        print_success("Created empty AGENTS.md file")
-    else:
-        print_info("AGENTS.md already exists")
-
-    # 2. Create symlink CLAUDE.md -> AGENTS.md
     claude_md = repo_dir / "CLAUDE.md"
-    if claude_md.exists() or claude_md.is_symlink():
-        print_info("CLAUDE.md already exists")
-    else:
+
+    has_agents = agents_md.exists() or agents_md.is_symlink()
+    has_claude = claude_md.exists() or claude_md.is_symlink()
+
+    # 1. Handle Memory Files & Symlinks
+    if has_agents and not has_claude:
+        print_info("Found existing AGENTS.md.")
         claude_md.symlink_to(Path("AGENTS.md"))
         print_success("Created symlink: CLAUDE.md -> AGENTS.md")
+    elif has_claude and not has_agents:
+        print_info("Found existing CLAUDE.md.")
+        agents_md.symlink_to(Path("CLAUDE.md"))
+        print_success("Created symlink: AGENTS.md -> CLAUDE.md")
+    elif not has_agents and not has_claude:
+        print_info("No AGENTS.md or CLAUDE.md found.")
+        agents_md.write_text("", encoding="utf-8")
+        print_success("Created base AGENTS.md file.")
+        claude_md.symlink_to(Path("AGENTS.md"))
+        print_success("Created symlink: CLAUDE.md -> AGENTS.md")
+    else:
+        print_info("Both AGENTS.md and CLAUDE.md already exist.")
 
-    # 3. Add skill-creator skill
-    skill_dirs = [
-        repo_dir / ".agents" / "skills" / "skill-creator",
-        repo_dir / ".claude" / "skills" / "skill-creator"
-    ]
-
-    for skill_dir in skill_dirs:
-        skill_dir.mkdir(parents=True, exist_ok=True)
-        skill_file = skill_dir / "SKILL.md"
-        skill_file.write_text(SKILL_CREATOR_CONTENT, encoding="utf-8")
-        print_success(f"Installed 'skill-creator' skill at {skill_file.relative_to(repo_dir)}")
+    # 2. Install Skill Creator via npx skills
+    print_info("Installing 'skill-creator' via `npx skills`...")
+    npx_bin = shutil.which("npx")
+    if npx_bin:
+        try:
+            res = subprocess.run(
+                [npx_bin, "-y", "skills", "add", "anthropics/skills", "--skill", "skill-creator", "-y"],
+                cwd=str(repo_dir),
+                capture_output=True,
+                text=True
+            )
+            if res.returncode == 0:
+                print_success("Installed 'skill-creator' skill via `npx skills`")
+            else:
+                print_warn(f"`npx skills` returned: {res.stderr.strip() or res.stdout.strip()}")
+        except Exception as e:
+            print_warn(f"Failed to run `npx skills`: {e}")
+    else:
+        print_warn("npx command not found. Please install Node.js/npx to install skills.")
 
     print(f"\n{Colors.BOLD}{Colors.GREEN}✔ Repository successfully configured!{Colors.RESET}\n")
 
 def main():
-    parser = argparse.ArgumentParser(description="Configure a new repository with AGENTS.md, CLAUDE.md symlink, and skill-creator.")
+    parser = argparse.ArgumentParser(description="Configure a repository with AGENTS.md/CLAUDE.md links and skill-creator.")
     parser.add_argument("path", nargs="?", default=".", help="Target repository directory path (default: current directory)")
     args = parser.parse_args()
 
