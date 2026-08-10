@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-setup_tools.py: Cross-platform installer for development tools (NVM, SDKMAN, Go, Docker, DBeaver, WezTerm, Fonts) 
+setup_tools.py: Cross-platform installer for development tools (NVM, SDKMAN, Go, Docker, DBeaver, WezTerm, Tmux, Fonts) 
 and macOS apps (Maccy, Rectangle) with startup configuration.
 """
 
@@ -182,6 +182,33 @@ def install_wezterm():
     elif sys.platform == "win32":
         run_cmd(["winget", "install", "wez.wezterm", "--silent"])
 
+def install_tmux():
+    print_info("Checking tmux...")
+    has_tmux = shutil.which("tmux") is not None
+
+    if has_tmux:
+        ok, out, _ = run_cmd(["tmux", "-V"])
+        if ok:
+            print_success(f"tmux is already installed ({out})")
+            return
+
+    if sys.platform == "darwin":
+        brew_bin = shutil.which("brew") or "/opt/homebrew/bin/brew"
+        if os.path.exists(brew_bin):
+            print_info("Installing tmux via Homebrew...")
+            ok, out, err = run_cmd([brew_bin, "install", "tmux"])
+            if ok or shutil.which("tmux"):
+                print_success("tmux installed successfully via Homebrew.")
+            else:
+                print_error(f"Failed to install tmux: {err or out}")
+        else:
+            print_error("Homebrew is required to install tmux on macOS.")
+    elif sys.platform == "linux":
+        print_info("Installing tmux via package manager...")
+        run_cmd("sudo apt-get update && sudo apt-get install -y tmux", shell=True)
+    elif sys.platform == "win32":
+        run_cmd(["winget", "install", "tmux.tmux", "--silent"])
+
 def install_fonts():
     print_info("Checking Hack Nerd Font...")
     if sys.platform == "darwin":
@@ -257,6 +284,7 @@ def main():
     install_docker()
     install_dbeaver()
     install_wezterm()
+    install_tmux()
     install_fonts()
     setup_mac_apps()
 
