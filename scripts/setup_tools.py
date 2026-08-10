@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 setup_tools.py: Cross-platform installer for development tools (NVM, SDKMAN, Go, Docker, DBeaver, WezTerm, Tmux, Fonts) 
-and macOS apps (Maccy, Rectangle) with startup configuration.
+and macOS apps (Maccy, Rectangle, OpenSuperWhisper) with startup & language configuration.
 """
 
 import sys
@@ -227,6 +227,47 @@ def install_fonts():
             else:
                 print_warn(f"Cask install for font-hack-nerd-font returned: {err or out}")
 
+def install_opensuperwhisper():
+    print_info("Checking OpenSuperWhisper...")
+    has_app = os.path.exists("/Applications/OpenSuperWhisper.app")
+
+    if not has_app and sys.platform == "darwin":
+        brew_bin = shutil.which("brew") or "/opt/homebrew/bin/brew"
+        if os.path.exists(brew_bin):
+            print_info("Installing OpenSuperWhisper via Homebrew Cask...")
+            ok, out, err = run_cmd([brew_bin, "install", "--cask", "opensuperwhisper"])
+            if ok or os.path.exists("/Applications/OpenSuperWhisper.app"):
+                print_success("OpenSuperWhisper installed successfully.")
+            else:
+                print_error(f"Failed to install OpenSuperWhisper: {err or out}")
+        else:
+            print_error("Homebrew is required to install OpenSuperWhisper on macOS.")
+    elif has_app:
+        print_success("OpenSuperWhisper.app is already installed in /Applications.")
+
+    if sys.platform == "darwin" and os.path.exists("/Applications/OpenSuperWhisper.app"):
+        print_info("Configuring OpenSuperWhisper language support (English & Brazilian Portuguese auto-detection)...")
+        run_cmd(["defaults", "write", "ru.starmel.OpenSuperWhisper", "whisperLanguage", "-string", "auto"])
+        print_success("Configured OpenSuperWhisper language setting ('auto' for English & Brazilian Portuguese).")
+
+        run_cmd(["open", "-a", "OpenSuperWhisper"])
+
+        ok, out, _ = run_cmd(["osascript", "-e", 'tell application "System Events" to get name of every login item'])
+        existing_items = [item.strip() for item in out.split(",")] if ok else []
+
+        if "OpenSuperWhisper" in existing_items:
+            print_success("OpenSuperWhisper is already configured in macOS startup login items.")
+        else:
+            apple_script = (
+                'tell application "System Events" to make new login item '
+                'at end with properties {path:"/Applications/OpenSuperWhisper.app", hidden:false}'
+            )
+            ok_item, _, err_item = run_cmd(["osascript", "-e", apple_script])
+            if ok_item:
+                print_success("Added OpenSuperWhisper to macOS startup login items.")
+            else:
+                print_warn(f"Could not add OpenSuperWhisper to login items: {err_item}")
+
 def setup_mac_apps():
     if sys.platform != "darwin":
         return
@@ -286,6 +327,7 @@ def main():
     install_wezterm()
     install_tmux()
     install_fonts()
+    install_opensuperwhisper()
     setup_mac_apps()
 
 if __name__ == "__main__":
