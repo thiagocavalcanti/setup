@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-setup_tools.py: Cross-platform installer for development tools (NVM, SDKMAN, Go, Docker, DBeaver, WezTerm) 
+setup_tools.py: Cross-platform installer for development tools (NVM, SDKMAN, Go, Docker, DBeaver, WezTerm, Fonts) 
 and macOS apps (Maccy, Rectangle) with startup configuration.
 """
 
@@ -182,6 +182,24 @@ def install_wezterm():
     elif sys.platform == "win32":
         run_cmd(["winget", "install", "wez.wezterm", "--silent"])
 
+def install_fonts():
+    print_info("Checking Hack Nerd Font...")
+    if sys.platform == "darwin":
+        user_font = Path.home() / "Library" / "Fonts" / "HackNerdFont-Regular.ttf"
+        system_font = Path("/Library/Fonts/HackNerdFont-Regular.ttf")
+        if user_font.exists() or system_font.exists():
+            print_success("Hack Nerd Font is already installed.")
+            return
+
+        brew_bin = shutil.which("brew") or "/opt/homebrew/bin/brew"
+        if os.path.exists(brew_bin):
+            print_info("Installing font-hack-nerd-font via Homebrew Cask...")
+            ok, out, err = run_cmd([brew_bin, "install", "--cask", "font-hack-nerd-font"])
+            if ok or user_font.exists():
+                print_success("Hack Nerd Font installed successfully.")
+            else:
+                print_warn(f"Cask install for font-hack-nerd-font returned: {err or out}")
+
 def setup_mac_apps():
     if sys.platform != "darwin":
         return
@@ -239,6 +257,7 @@ def main():
     install_docker()
     install_dbeaver()
     install_wezterm()
+    install_fonts()
     setup_mac_apps()
 
 if __name__ == "__main__":
