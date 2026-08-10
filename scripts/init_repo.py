@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 init_repo.py: Configures a repository by ensuring AGENTS.md and CLAUDE.md are linked,
-and installs the 'skill-creator' skill using `npx skills`.
+and installs essential agent skills (skill-creator, gh-axi, chrome-devtools-axi) using `npx skills`.
 """
 
 import sys
@@ -66,30 +66,35 @@ def init_repository(target_path):
     else:
         print_info("Both AGENTS.md and CLAUDE.md already exist.")
 
-    # 2. Install Skill Creator via npx skills
-    print_info("Installing 'skill-creator' via `npx skills`...")
+    # 2. Install Skills via npx skills
+    skills_to_install = [
+        ("anthropics/skills", "skill-creator", "skill-creator"),
+        ("kunchenguid/gh-axi", None, "gh-axi (GitHub Extension)"),
+        ("kunchenguid/chrome-devtools-axi", None, "chrome-devtools-axi (Chrome DevTools Extension)")
+    ]
+
+    print_info("Installing agent skills via `npx skills`...")
     npx_bin = shutil.which("npx")
     if npx_bin:
-        try:
-            res = subprocess.run(
-                [npx_bin, "-y", "skills", "add", "anthropics/skills", "--skill", "skill-creator", "-y"],
-                cwd=str(repo_dir),
-                capture_output=True,
-                text=True
-            )
-            if res.returncode == 0:
-                print_success("Installed 'skill-creator' skill via `npx skills`")
-            else:
-                print_warn(f"`npx skills` returned: {res.stderr.strip() or res.stdout.strip()}")
-        except Exception as e:
-            print_warn(f"Failed to run `npx skills`: {e}")
+        for pkg, skill_name, label in skills_to_install:
+            cmd = [npx_bin, "-y", "skills", "add", pkg, "-y"]
+            if skill_name:
+                cmd.extend(["--skill", skill_name])
+            try:
+                res = subprocess.run(cmd, cwd=str(repo_dir), capture_output=True, text=True)
+                if res.returncode == 0:
+                    print_success(f"Installed '{label}' via `npx skills`")
+                else:
+                    print_warn(f"`npx skills` error installing {label}: {res.stderr.strip() or res.stdout.strip()}")
+            except Exception as e:
+                print_warn(f"Failed to install {label}: {e}")
     else:
         print_warn("npx command not found. Please install Node.js/npx to install skills.")
 
     print(f"\n{Colors.BOLD}{Colors.GREEN}✔ Repository successfully configured!{Colors.RESET}\n")
 
 def main():
-    parser = argparse.ArgumentParser(description="Configure a repository with AGENTS.md/CLAUDE.md links and skill-creator.")
+    parser = argparse.ArgumentParser(description="Configure a repository with AGENTS.md/CLAUDE.md links and essential agent skills.")
     parser.add_argument("path", nargs="?", default=".", help="Target repository directory path (default: current directory)")
     args = parser.parse_args()
 
