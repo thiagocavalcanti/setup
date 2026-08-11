@@ -154,7 +154,7 @@ def setup_ai_memory_and_tools():
                 if to_append:
                     with open(rc_file, "a", encoding="utf-8") as f:
                         f.write("\n# Added by Personal Setup\n" + "\n".join(to_append) + "\n")
-                    print_success(f"Configured PATH and firstmate alias in {rc_file}")
+                    print_success(f"Configured PATH and aliases in {rc_file}")
             elif rc_file.name == ".zprofile":
                 rc_file.write_text(f"# Added by Personal Setup\n{path_export}\n{alias_init_repo}\n{alias_git_init_repo}\n{alias_git_ai_commit}\n{alias_firstmate}\n", encoding="utf-8")
                 print_success(f"Created and configured {rc_file}")

@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
 """
 init_repo.py: Configures a repository by ensuring AGENTS.md and CLAUDE.md are linked,
-evaluates and configures Firstmate on the machine path, installs base core skills
-(skill-creator, gh-axi, chrome-devtools-axi), and prompts for AI stack options.
+evaluates Firstmate on the machine path, provisions .agents/skills/doc-auto-sync/
+and repository-specific tracked_docs.json manifest, installs core base skills,
+and prompts for AI stack options.
 """
 
 import sys
 import os
+import json
 import shutil
 import stat
 import subprocess
@@ -64,6 +66,7 @@ def ensure_firstmate():
         firstmate_bin.chmod(firstmate_bin.stat().st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
         print_success(f"Installed firstmate launcher command at {firstmate_bin}")
 
+
 def prompt_stack_selection(cli_choice=None):
     if cli_choice in ["kunchenguid", "mattpocock"]:
         return cli_choice
@@ -92,11 +95,12 @@ def install_stack_skills(repo_dir, stack_choice):
         return
 
     # Base skills installed for all repositories regarding the AI stack
-    print_info("Installing core base skills (skill-creator, gh-axi, chrome-devtools-axi) via `npx skills@latest`...")
+    print_info("Installing core base skills (skill-creator, gh-axi, chrome-devtools-axi, doc-auto-sync) via `npx skills@latest`...")
     base_skills = [
         ("anthropics/skills", "skill-creator", "skill-creator"),
         ("kunchenguid/gh-axi", None, "gh-axi (GitHub Extension)"),
-        ("kunchenguid/chrome-devtools-axi", None, "chrome-devtools-axi (Chrome DevTools Extension)")
+        ("kunchenguid/chrome-devtools-axi", None, "chrome-devtools-axi (Chrome DevTools Extension)"),
+        ("thiagocavalcanti/skill-doc-auto-sync", None, "doc-auto-sync (Documentation Tracker)")
     ]
     for pkg, skill_name, label in base_skills:
         cmd = [npx_bin, "-y", "skills@latest", "add", pkg, "-y"]
@@ -173,7 +177,9 @@ def init_repository(target_path, cli_stack=None):
     else:
         print_info("Both AGENTS.md and CLAUDE.md already exist.")
 
-    # 3. Stack Prompt & Skills Installation
+
+
+    # 4. Stack Prompt & Skills Installation
     chosen_stack = prompt_stack_selection(cli_stack)
     print_info(f"Selected stack: {Colors.BOLD}{chosen_stack}{Colors.RESET}")
     install_stack_skills(repo_dir, chosen_stack)
@@ -181,7 +187,7 @@ def init_repository(target_path, cli_stack=None):
     print(f"\n{Colors.BOLD}{Colors.GREEN}✔ Repository successfully configured!{Colors.RESET}\n")
 
 def main():
-    parser = argparse.ArgumentParser(description="Configure a repository with AGENTS.md/CLAUDE.md links, Firstmate, core skills, and AI stack options.")
+    parser = argparse.ArgumentParser(description="Configure a repository with AGENTS.md/CLAUDE.md links, Firstmate, doc-auto-sync skill, core skills, and AI stack options.")
     parser.add_argument("path", nargs="?", default=".", help="Target repository directory path (default: current directory)")
     parser.add_argument("--stack", choices=["kunchenguid", "mattpocock"], help="AI Stack to install (kunchenguid or mattpocock)")
     args = parser.parse_args()
