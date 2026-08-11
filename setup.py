@@ -129,7 +129,7 @@ def setup_ai_memory_and_tools():
         home_dir / ".bashrc",
         home_dir / ".bash_profile"
     ]
-    path_export = 'export PATH="$HOME/bin:$HOME/scripts:$PATH"'
+    path_export = 'export PATH="$HOME/bin:$HOME/scripts:$HOME/.firstmate/bin:$PATH"'
     alias_init_repo = 'alias init-repo="python3 $HOME/scripts/init_repo.py"'
     alias_git_init_repo = 'alias git-init-repo="python3 $HOME/scripts/init_repo.py"'
     alias_git_ai_commit = 'alias git-ai-commit="python3 $HOME/scripts/git_ai_commit.py"'

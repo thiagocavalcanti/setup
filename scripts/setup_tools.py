@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-setup_tools.py: Cross-platform installer for development tools (NVM, SDKMAN, Go, Docker, DBeaver, WezTerm, Tmux, no-mistakes, gnhf, treehouse, Fonts) 
+setup_tools.py: Cross-platform installer for development tools (NVM, SDKMAN, Go, Docker, DBeaver, WezTerm, Tmux, no-mistakes, gnhf, treehouse, firstmate, Fonts) 
 and macOS apps (Maccy, Rectangle, OpenSuperWhisper) with startup & language configuration.
 """
 
@@ -311,6 +311,26 @@ def install_treehouse():
     else:
         print_warn("treehouse installation could not be verified automatically.")
 
+def install_firstmate():
+    print_info("Checking firstmate...")
+    home = Path.home()
+    firstmate_dir = home / ".firstmate"
+
+    if firstmate_dir.exists():
+        print_info("Updating firstmate repository at ~/.firstmate...")
+        ok, out, err = run_cmd(["git", "-C", str(firstmate_dir), "pull"])
+        if ok or "Already up to date" in out or "Already up to date" in err:
+            print_success("firstmate repository is up to date at ~/.firstmate")
+        else:
+            print_warn(f"git pull in ~/.firstmate returned: {err or out}")
+    else:
+        print_info("Cloning firstmate repository to ~/.firstmate...")
+        ok, out, err = run_cmd(["git", "clone", "https://github.com/kunchenguid/firstmate", str(firstmate_dir)])
+        if ok or firstmate_dir.exists():
+            print_success("firstmate repository cloned to ~/.firstmate")
+        else:
+            print_error(f"Failed to clone firstmate: {err or out}")
+
 def install_fonts():
     print_info("Checking Hack Nerd Font...")
     if sys.platform == "darwin":
@@ -431,6 +451,7 @@ def main():
     install_no_mistakes()
     install_gnhf()
     install_treehouse()
+    install_firstmate()
     install_fonts()
     install_opensuperwhisper()
     setup_mac_apps()
