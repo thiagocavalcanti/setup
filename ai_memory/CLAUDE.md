@@ -6,6 +6,7 @@ These are common instructions for Thiago's agents across all scenarios.
 
 * Never use the em dash "—". Use plain dash "-" instead
 * When creating a git commit, ALWAYS use `python3 ~/scripts/git_ai_commit.py` (or `git ai-commit`) to generate a token-optimized diff summary instead of running a full un-budgeted `git diff`
+* Before creating a git commit, check documentation freshness via `python3 scripts/check_doc_sync.py` or inspect `.agents/skills/doc-auto-sync/tracked_docs.json`. If staged changes match a tracked topic, update ONLY the relevant documentation section and bump its topic version counter in `tracked_docs.json`.
 * When writing commit messages, NEVER auto-add your agent name as co-author
 * Never manually modify CHANGELOG.md files or any files that are marked as auto-generated
 * When writing or substantially editing long Markdown files, put each full sentence on its own line.

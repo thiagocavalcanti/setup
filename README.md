@@ -18,13 +18,17 @@ Running a single command (`python3 setup.py`) configures central AI memory, deve
 - **Centralized Guidelines**: Stores master memory files (`CLAUDE.md`, `OPINIONS.md`, `VOICE.md`) at `~/.config/ai-memory/`.
 - **Automatic Symlinking**: Symlinks `~/.claude/CLAUDE.md`, `~/AGENTS.md`, `~/OPINIONS.md`, and `~/VOICE.md` to ensure any active AI coding assistant follows system rules and coding style invariants.
 
-### ⚡ 2. Repository Initializer & CLI Utilities
+### ⚡ 2. Repository Initializer & Interactive AI Stacks
 - **`init-repo` / `git-init-repo`**:
-  - Automatically links existing `AGENTS.md` and `CLAUDE.md` files in any workspace.
-  - Installs essential agent skills via `npx skills`:
+  - Evaluates and configures **Firstmate** on the machine path (`~/.firstmate` & `~/bin/firstmate`).
+  - Automatically links existing `AGENTS.md` <-> `CLAUDE.md` in any workspace.
+  - Installs **Core Base Skills** into every repository (`npx skills@latest`):
     - `skill-creator` (`anthropics/skills`)
-    - `gh-axi` (GitHub CLI & API extension by `@kunchenguid`)
-    - `chrome-devtools-axi` (Chrome DevTools automation extension by `@kunchenguid`)
+    - `gh-axi` (`kunchenguid/gh-axi`)
+    - `chrome-devtools-axi` (`kunchenguid/chrome-devtools-axi`)
+  - Interactively prompts (or accepts `--stack kunchenguid` / `--stack mattpocock`) for AI stack options:
+    - 🟢 **Kunchenguid AI Stack**: Core Base Skills + Multi-Agent Toolsuite (Firstmate, Treehouse, No-Mistakes, GNHF).
+    - 🟣 **Matt Pocock AI Stack**: Core Base Skills + 8 `mattpocock/skills` (`setup-matt-pocock-skills`, `ask-matt`, `grill-with-docs`, `wayfinder`, `to-spec`, `to-tickets`, `implement`, `code-review`).
 - **`git-ai-commit`**:
   - Token-optimized Git diff generator that caps diff patches at 150 lines and filters lockfiles/binaries for concise, low-cost AI commit message generation.
 - **`firstmate` Launcher**:
@@ -58,7 +62,7 @@ Running a single command (`python3 setup.py`) configures central AI memory, deve
 To provision or update your workstation setup:
 
 ```bash
-git clone https://github.com/thiagocavalcanti/setup.md
+git clone https://github.com/thiagocavalcanti/setup.git
 cd setup
 python3 setup.py
 ```
@@ -69,6 +73,9 @@ Run `init-repo` inside any project folder:
 
 ```bash
 init-repo /path/to/my-new-repo
+
+# Or pass stack directly via CLI:
+init-repo /path/to/my-new-repo --stack mattpocock
 ```
 
 ---
@@ -89,7 +96,7 @@ setup/
 │       └── wezterm.lua         # WezTerm configuration script
 └── scripts/
     ├── setup_tools.py          # Modular tools, runtimes, & apps installer
-    ├── init_repo.py            # Repository initializer (AGENTS.md links + npx skills)
+    ├── init_repo.py            # Repository initializer (Firstmate + Stack selection)
     └── git_ai_commit.py        # Token-optimized diff summarizer
 ```
 

@@ -1,0 +1,57 @@
+{
+  "version": "1.0.0",
+  "tracked_files": [
+    {
+      "path": "README.md",
+      "topics": [
+        {
+          "id": "init-repo-stacks",
+          "name": "init-repo & AI Stack Options",
+          "version": 2,
+          "description": "Repository initializer, Firstmate evaluation, Kunchenguid & Matt Pocock stack options",
+          "match_patterns": ["scripts/init_repo.py"]
+        },
+        {
+          "id": "ai-global-memory",
+          "name": "Centralized AI Global Memory",
+          "version": 1,
+          "description": "Master memory files (CLAUDE.md, OPINIONS.md, VOICE.md) and symlinks",
+          "match_patterns": ["ai_memory/*", "setup.py"]
+        },
+        {
+          "id": "terminal-visuals",
+          "name": "WezTerm & Herdr Terminal Setup",
+          "version": 1,
+          "description": "WezTerm Rose Pine Moon config, Herdr multiplexer, tmux uninstallation",
+          "match_patterns": ["config/wezterm/*", "scripts/setup_tools.py"]
+        },
+        {
+          "id": "agent-toolsuite",
+          "name": "Multi-Agent AI Toolsuite",
+          "version": 1,
+          "description": "Firstmate, Treehouse, No-Mistakes, GNHF orchestration suite",
+          "match_patterns": ["scripts/setup_tools.py", "scripts/init_repo.py"]
+        }
+      ]
+    },
+    {
+      "path": "CLAUDE.md",
+      "topics": [
+        {
+          "id": "commit-workflow",
+          "name": "Commit Workflow & git-ai-commit",
+          "version": 1,
+          "description": "Rules for drafting commit messages using git-ai-commit",
+          "match_patterns": ["scripts/git_ai_commit.py"]
+        },
+        {
+          "id": "doc-auto-sync-rule",
+          "name": "Documentation Auto-Sync Rule",
+          "version": 1,
+          "description": "Automatic documentation inspection using doc-auto-sync skill before commit",
+          "match_patterns": [".agents/skills/doc-auto-sync/*", "scripts/check_doc_sync.py"]
+        }
+      ]
+    }
+  ]
+}
