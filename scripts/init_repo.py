@@ -103,7 +103,7 @@ def install_stack_skills(repo_dir, stack_choice):
         ("thiagocavalcanti/skill-doc-auto-sync", None, "doc-auto-sync (Documentation Tracker)")
     ]
     for pkg, skill_name, label in base_skills:
-        cmd = [npx_bin, "-y", "skills@latest", "add", pkg, "-y"]
+        cmd = [npx_bin, "-y", "skills@latest", "add", pkg, "-a", "antigravity", "-a", "claude-code", "-y"]
         if skill_name:
             cmd.extend(["--skill", skill_name])
         try:
@@ -130,7 +130,7 @@ def install_stack_skills(repo_dir, stack_choice):
             "implement",
             "code-review"
         ]
-        cmd = [npx_bin, "-y", "skills@latest", "add", "mattpocock/skills", "-y"]
+        cmd = [npx_bin, "-y", "skills@latest", "add", "mattpocock/skills", "-a", "antigravity", "-a", "claude-code", "-y"]
         for sk in matt_skills:
             cmd.extend(["--skill", sk])
         try:
