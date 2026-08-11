@@ -122,7 +122,7 @@ def setup_ai_memory_and_tools():
             if not installed_bin:
                 print_warn(f"Could not create symlink for {cmd_name} in bin directories.")
 
-    # Configure PATH and init-repo alias in shell config files (~/.zshrc, ~/.zprofile, ~/.bashrc, ~/.bash_profile)
+    # Configure PATH and shell aliases (~/.zshrc, ~/.zprofile, ~/.bashrc, ~/.bash_profile)
     shell_configs = [
         home_dir / ".zshrc",
         home_dir / ".zprofile",
@@ -133,6 +133,7 @@ def setup_ai_memory_and_tools():
     alias_init_repo = 'alias init-repo="python3 $HOME/scripts/init_repo.py"'
     alias_git_init_repo = 'alias git-init-repo="python3 $HOME/scripts/init_repo.py"'
     alias_git_ai_commit = 'alias git-ai-commit="python3 $HOME/scripts/git_ai_commit.py"'
+    alias_firstmate = 'alias firstmate="cd $HOME/.firstmate && claude"'
 
     for rc_file in shell_configs:
         try:
@@ -147,13 +148,15 @@ def setup_ai_memory_and_tools():
                     to_append.append(alias_git_init_repo)
                 if "alias git-ai-commit=" not in content:
                     to_append.append(alias_git_ai_commit)
+                if "alias firstmate=" not in content:
+                    to_append.append(alias_firstmate)
 
                 if to_append:
                     with open(rc_file, "a", encoding="utf-8") as f:
                         f.write("\n# Added by Personal Setup\n" + "\n".join(to_append) + "\n")
-                    print_success(f"Configured PATH and init-repo alias in {rc_file}")
+                    print_success(f"Configured PATH and firstmate alias in {rc_file}")
             elif rc_file.name == ".zprofile":
-                rc_file.write_text(f"# Added by Personal Setup\n{path_export}\n{alias_init_repo}\n{alias_git_init_repo}\n{alias_git_ai_commit}\n", encoding="utf-8")
+                rc_file.write_text(f"# Added by Personal Setup\n{path_export}\n{alias_init_repo}\n{alias_git_init_repo}\n{alias_git_ai_commit}\n{alias_firstmate}\n", encoding="utf-8")
                 print_success(f"Created and configured {rc_file}")
         except Exception as e:
             print_warn(f"Could not update {rc_file}: {e}")

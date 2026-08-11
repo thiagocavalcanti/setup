@@ -331,6 +331,13 @@ def install_firstmate():
         else:
             print_error(f"Failed to clone firstmate: {err or out}")
 
+    target_bin = home / "bin" / "firstmate"
+    target_bin.parent.mkdir(parents=True, exist_ok=True)
+    wrapper_content = '#!/bin/sh\ncd "$HOME/.firstmate" && exec claude "$@"\n'
+    target_bin.write_text(wrapper_content, encoding="utf-8")
+    target_bin.chmod(target_bin.stat().st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
+    print_success(f"Installed firstmate launcher command at {target_bin} (runs 'claude' inside ~/.firstmate)")
+
 def install_fonts():
     print_info("Checking Hack Nerd Font...")
     if sys.platform == "darwin":
