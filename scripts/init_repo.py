@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
 init_repo.py: Configures a repository by ensuring AGENTS.md and CLAUDE.md are linked,
-evaluates and configures Firstmate on the machine path, and prompts the user to select
-between the Kunchenguid AI Stack or the Matt Pocock AI Stack via `npx skills@latest`.
+evaluates and configures Firstmate on the machine path, installs base core skills
+(skill-creator, gh-axi, chrome-devtools-axi), and prompts for AI stack options.
 """
 
 import sys
@@ -72,9 +72,9 @@ def prompt_stack_selection(cli_choice=None):
         print_info("Non-interactive terminal detected. Defaulting to 'kunchenguid' AI stack.")
         return "kunchenguid"
 
-    print(f"\n{Colors.BOLD}{Colors.CYAN}Select AI Stack to Install:{Colors.RESET}")
-    print(f"  {Colors.BOLD}1){Colors.RESET} {Colors.GREEN}Kunchenguid AI Stack{Colors.RESET} (skill-creator, gh-axi, chrome-devtools-axi, Firstmate, Treehouse, No-Mistakes, GNHF)")
-    print(f"  {Colors.BOLD}2){Colors.RESET} {Colors.MAGENTA}Matt Pocock AI Stack{Colors.RESET} (mattpocock/skills: setup-matt-pocock-skills, ask-matt, grill-with-docs, wayfinder, to-spec, to-tickets, implement, code-review)")
+    print(f"\n{Colors.BOLD}{Colors.CYAN}Select AI Stack Option:{Colors.RESET}")
+    print(f"  {Colors.BOLD}1){Colors.RESET} {Colors.GREEN}Kunchenguid AI Stack{Colors.RESET} (Core Skills + Firstmate, Treehouse, No-Mistakes, GNHF toolsuite)")
+    print(f"  {Colors.BOLD}2){Colors.RESET} {Colors.MAGENTA}Matt Pocock AI Stack{Colors.RESET} (Core Skills + mattpocock/skills: setup-matt-pocock-skills, ask-matt, grill-with-docs, wayfinder, to-spec, to-tickets, implement, code-review)")
     
     try:
         choice = input(f"\nChoose stack [{Colors.BOLD}1{Colors.RESET}/2] (default: 1): ").strip()
@@ -91,27 +91,29 @@ def install_stack_skills(repo_dir, stack_choice):
         print_warn("npx command not found. Please install Node.js/npx to install skills.")
         return
 
-    if stack_choice == "kunchenguid":
-        print_info("Installing Kunchenguid AI Stack skills via `npx skills@latest`...")
-        skills = [
-            ("anthropics/skills", "skill-creator", "skill-creator"),
-            ("kunchenguid/gh-axi", None, "gh-axi (GitHub Extension)"),
-            ("kunchenguid/chrome-devtools-axi", None, "chrome-devtools-axi (Chrome DevTools Extension)")
-        ]
-        for pkg, skill_name, label in skills:
-            cmd = [npx_bin, "-y", "skills@latest", "add", pkg, "-y"]
-            if skill_name:
-                cmd.extend(["--skill", skill_name])
-            try:
-                res = subprocess.run(cmd, cwd=str(repo_dir), capture_output=True, text=True)
-                if res.returncode == 0:
-                    print_success(f"Installed '{label}' via `npx skills@latest`")
-                else:
-                    print_warn(f"`npx skills` error installing {label}: {res.stderr.strip() or res.stdout.strip()}")
-            except Exception as e:
-                print_warn(f"Failed to install {label}: {e}")
-        print_success("Kunchenguid Multi-Agent AI Toolsuite fully configured.")
+    # Base skills installed for all repositories regarding the AI stack
+    print_info("Installing core base skills (skill-creator, gh-axi, chrome-devtools-axi) via `npx skills@latest`...")
+    base_skills = [
+        ("anthropics/skills", "skill-creator", "skill-creator"),
+        ("kunchenguid/gh-axi", None, "gh-axi (GitHub Extension)"),
+        ("kunchenguid/chrome-devtools-axi", None, "chrome-devtools-axi (Chrome DevTools Extension)")
+    ]
+    for pkg, skill_name, label in base_skills:
+        cmd = [npx_bin, "-y", "skills@latest", "add", pkg, "-y"]
+        if skill_name:
+            cmd.extend(["--skill", skill_name])
+        try:
+            res = subprocess.run(cmd, cwd=str(repo_dir), capture_output=True, text=True)
+            if res.returncode == 0:
+                print_success(f"Installed '{label}' via `npx skills@latest`")
+            else:
+                print_warn(f"`npx skills` error installing {label}: {res.stderr.strip() or res.stdout.strip()}")
+        except Exception as e:
+            print_warn(f"Failed to install {label}: {e}")
 
+    # Stack-specific additions
+    if stack_choice == "kunchenguid":
+        print_success("Kunchenguid Multi-Agent AI Toolsuite fully configured.")
     elif stack_choice == "mattpocock":
         print_info("Installing Matt Pocock AI Stack skills via `npx skills@latest add mattpocock/skills`...")
         matt_skills = [
@@ -179,7 +181,7 @@ def init_repository(target_path, cli_stack=None):
     print(f"\n{Colors.BOLD}{Colors.GREEN}✔ Repository successfully configured!{Colors.RESET}\n")
 
 def main():
-    parser = argparse.ArgumentParser(description="Configure a repository with AGENTS.md/CLAUDE.md links, Firstmate, and AI agent skills.")
+    parser = argparse.ArgumentParser(description="Configure a repository with AGENTS.md/CLAUDE.md links, Firstmate, core skills, and AI stack options.")
     parser.add_argument("path", nargs="?", default=".", help="Target repository directory path (default: current directory)")
     parser.add_argument("--stack", choices=["kunchenguid", "mattpocock"], help="AI Stack to install (kunchenguid or mattpocock)")
     args = parser.parse_args()
