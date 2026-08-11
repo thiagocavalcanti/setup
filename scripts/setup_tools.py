@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """
-setup_tools.py: Cross-platform installer for development tools (NVM, SDKMAN, Go, Docker, DBeaver, WezTerm, Tmux, no-mistakes, gnhf, treehouse, firstmate, Fonts) 
+setup_tools.py: Cross-platform installer for development tools (NVM, SDKMAN, Go, Docker, DBeaver, WezTerm, Herdr, no-mistakes, gnhf, treehouse, firstmate, Fonts) 
 and macOS apps (Maccy, Rectangle, OpenSuperWhisper) with startup & language configuration.
+Ensures tmux is uninstalled and replaced by Herdr.
 """
 
 import sys
@@ -183,32 +184,49 @@ def install_wezterm():
     elif sys.platform == "win32":
         run_cmd(["winget", "install", "wez.wezterm", "--silent"])
 
-def install_tmux():
-    print_info("Checking tmux...")
-    has_tmux = shutil.which("tmux") is not None
-
-    if has_tmux:
-        ok, out, _ = run_cmd(["tmux", "-V"])
-        if ok:
-            print_success(f"tmux is already installed ({out})")
-            return
-
+def uninstall_tmux():
+    print_info("Checking tmux (ensuring uninstalled)...")
     if sys.platform == "darwin":
         brew_bin = shutil.which("brew") or "/opt/homebrew/bin/brew"
         if os.path.exists(brew_bin):
-            print_info("Installing tmux via Homebrew...")
-            ok, out, err = run_cmd([brew_bin, "install", "tmux"])
-            if ok or shutil.which("tmux"):
-                print_success("tmux installed successfully via Homebrew.")
-            else:
-                print_error(f"Failed to install tmux: {err or out}")
-        else:
-            print_error("Homebrew is required to install tmux on macOS.")
+            run_cmd([brew_bin, "uninstall", "tmux"])
     elif sys.platform == "linux":
-        print_info("Installing tmux via package manager...")
-        run_cmd("sudo apt-get update && sudo apt-get install -y tmux", shell=True)
-    elif sys.platform == "win32":
-        run_cmd(["winget", "install", "tmux.tmux", "--silent"])
+        run_cmd("sudo apt-get remove -y tmux", shell=True)
+    
+    if not shutil.which("tmux"):
+        print_success("tmux is uninstalled.")
+    else:
+        print_warn("tmux executable still present in PATH.")
+
+def install_herdr():
+    print_info("Checking Herdr...")
+    home = Path.home()
+    target_bin = home / "bin" / "herdr"
+    bin_in_path = shutil.which("herdr")
+
+    if bin_in_path or target_bin.exists():
+        bin_file = str(bin_in_path or target_bin)
+        ok, out, _ = run_cmd([bin_file, "--version"])
+        if ok:
+            print_success(f"herdr is already installed ({out})")
+            return
+
+    fm_herdr_installer = home / ".firstmate" / "bin" / "fm-install-herdr.sh"
+    if fm_herdr_installer.exists():
+        print_info("Installing Herdr via firstmate installer...")
+        ok, out, err = run_cmd(["bash", str(fm_herdr_installer), str(home / "bin")])
+        if ok or target_bin.exists():
+            print_success("herdr installed successfully to ~/bin/herdr")
+            return
+
+    npm_bin = shutil.which("npm")
+    if npm_bin:
+        print_info("Installing herdr globally via npm...")
+        ok, out, err = run_cmd([npm_bin, "install", "-g", "herdr"])
+        if ok or shutil.which("herdr"):
+            print_success("herdr installed successfully via npm.")
+        else:
+            print_warn(f"Could not install herdr: {err or out}")
 
 def install_no_mistakes():
     print_info("Checking no-mistakes...")
@@ -454,7 +472,8 @@ def main():
     install_docker()
     install_dbeaver()
     install_wezterm()
-    install_tmux()
+    uninstall_tmux()
+    install_herdr()
     install_no_mistakes()
     install_gnhf()
     install_treehouse()
