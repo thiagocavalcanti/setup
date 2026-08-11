@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-setup_tools.py: Cross-platform installer for development tools (NVM, SDKMAN, Go, Docker, DBeaver, WezTerm, Tmux, no-mistakes, Fonts) 
+setup_tools.py: Cross-platform installer for development tools (NVM, SDKMAN, Go, Docker, DBeaver, WezTerm, Tmux, no-mistakes, gnhf, Fonts) 
 and macOS apps (Maccy, Rectangle, OpenSuperWhisper) with startup & language configuration.
 """
 
@@ -248,6 +248,27 @@ def install_no_mistakes():
     else:
         print_warn("no-mistakes installation could not be verified automatically.")
 
+def install_gnhf():
+    print_info("Checking gnhf...")
+    has_gnhf = shutil.which("gnhf") is not None
+
+    if has_gnhf:
+        ok, out, _ = run_cmd(["gnhf", "--version"])
+        if ok:
+            print_success(f"gnhf is already installed ({out})")
+            return
+
+    npm_bin = shutil.which("npm")
+    if npm_bin:
+        print_info("Installing gnhf globally via npm...")
+        ok, out, err = run_cmd([npm_bin, "install", "-g", "gnhf"])
+        if ok or shutil.which("gnhf"):
+            print_success("gnhf installed successfully via npm.")
+        else:
+            print_warn(f"Could not install gnhf via npm: {err or out}")
+    else:
+        print_warn("npm not found. Please install Node.js/npm to install gnhf.")
+
 def install_fonts():
     print_info("Checking Hack Nerd Font...")
     if sys.platform == "darwin":
@@ -366,6 +387,7 @@ def main():
     install_wezterm()
     install_tmux()
     install_no_mistakes()
+    install_gnhf()
     install_fonts()
     install_opensuperwhisper()
     setup_mac_apps()
