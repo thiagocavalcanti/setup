@@ -8,9 +8,7 @@ This repository stores cross-platform computer setup scripts, CLI utilities, and
 - `ai_memory/`: Source templates for global AI memory files (`CLAUDE.md`, `OPINIONS.md`, `VOICE.md`). Deployed to `~/.config/ai-memory/` and symlinked to `~/.claude/CLAUDE.md`, `~/AGENTS.md`, `~/OPINIONS.md`, `~/VOICE.md`.
 - `scripts/setup_tools.py`: Modular installer for development runtimes (NVM, SDKMAN, Golang, Docker, DBeaver) and macOS apps (Maccy, Rectangle + startup login items).
 - `scripts/git_ai_commit.py`: Token-optimized Git diff generator for AI commit message drafting. Installed to `~/bin/git-ai-commit`.
-- `scripts/init_repo.py`: Repository initializer script. Evaluates Firstmate on machine path, links `AGENTS.md`/`CLAUDE.md`, and installs skills for chosen AI stack (`kunchenguid` or `mattpocock`).
-- `scripts/check_doc_sync.py`: Evaluates staged files against `.agents/skills/doc-auto-sync/tracked_docs.json` topic match patterns to detect stale documentation before commit.
-- `.agents/skills/doc-auto-sync/`: Custom skill for topic-versioned documentation tracking and token-saving pre-commit verification.
+- `scripts/init_repo.py`: Repository initializer script. Evaluates Firstmate on machine path, links `AGENTS.md`/`CLAUDE.md`, and installs core base skills (`thiagocavalcanti/skill-doc-auto-sync`, `gh-axi`, `chrome-devtools-axi`, `skill-creator`) plus chosen AI stack (`kunchenguid` or `mattpocock`).
 
 ## Guidelines for Future Agents
 
@@ -23,7 +21,8 @@ This repository stores cross-platform computer setup scripts, CLI utilities, and
    - Use `Colors` class and helper functions (`print_step`, `print_info`, `print_success`, `print_warn`, `print_error`) for clean output.
 
 3. **Commit & Documentation Workflow**:
-   - Run `python3 scripts/check_doc_sync.py` to check for stale documentation topics. If changes touch tracked topics, update the Markdown documentation and bump topic versions in `tracked_docs.json`.
+   - Run `python3 .agents/skills/doc-auto-sync/scripts/check_doc_sync.py` to check for stale documentation topics.
+     If changes touch tracked topics, update the Markdown documentation and bump topic versions in `tracked_docs.json`.
    - Before drafting git commit messages, ALWAYS run `python3 ~/scripts/git_ai_commit.py` (or `git ai-commit`) to generate a token-optimized diff summary.
 
 4. **New Repository Configuration**:
