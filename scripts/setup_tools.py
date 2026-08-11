@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-setup_tools.py: Cross-platform installer for development tools (NVM, SDKMAN, Go, Docker, DBeaver, WezTerm, Tmux, no-mistakes, gnhf, Fonts) 
+setup_tools.py: Cross-platform installer for development tools (NVM, SDKMAN, Go, Docker, DBeaver, WezTerm, Tmux, no-mistakes, gnhf, treehouse, Fonts) 
 and macOS apps (Maccy, Rectangle, OpenSuperWhisper) with startup & language configuration.
 """
 
@@ -269,6 +269,48 @@ def install_gnhf():
     else:
         print_warn("npm not found. Please install Node.js/npm to install gnhf.")
 
+def install_treehouse():
+    print_info("Checking treehouse...")
+    home = Path.home()
+    target_bin = home / "bin" / "treehouse"
+    go_bin = home / "go" / "bin" / "treehouse"
+    bin_in_path = shutil.which("treehouse")
+
+    if bin_in_path or target_bin.exists() or go_bin.exists():
+        bin_file = str(target_bin if target_bin.exists() else (bin_in_path or go_bin))
+        ok, out, _ = run_cmd([bin_file, "--version"])
+        if ok:
+            if go_bin.exists() and not target_bin.exists():
+                target_bin.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(go_bin, target_bin)
+                target_bin.chmod(target_bin.stat().st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
+            print_success(f"treehouse is already installed ({out})")
+            return
+
+    if shutil.which("go"):
+        print_info("Building treehouse via `go install`...")
+        run_cmd("go install github.com/kunchenguid/treehouse@latest", shell=True)
+
+    if not go_bin.exists():
+        print_info("Installing treehouse via official script...")
+        run_cmd("curl -fsSL https://kunchenguid.github.io/treehouse/install.sh | sh", shell=True)
+
+    src_bin = None
+    if go_bin.exists():
+        src_bin = go_bin
+    elif (home / ".treehouse" / "bin" / "treehouse").exists():
+        src_bin = home / ".treehouse" / "bin" / "treehouse"
+
+    if src_bin:
+        target_bin.parent.mkdir(parents=True, exist_ok=True)
+        if target_bin.exists() or target_bin.is_symlink():
+            target_bin.unlink(missing_ok=True)
+        shutil.copy2(src_bin, target_bin)
+        target_bin.chmod(target_bin.stat().st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
+        print_success(f"Installed treehouse binary to {target_bin}")
+    else:
+        print_warn("treehouse installation could not be verified automatically.")
+
 def install_fonts():
     print_info("Checking Hack Nerd Font...")
     if sys.platform == "darwin":
@@ -388,6 +430,7 @@ def main():
     install_tmux()
     install_no_mistakes()
     install_gnhf()
+    install_treehouse()
     install_fonts()
     install_opensuperwhisper()
     setup_mac_apps()
